@@ -1,0 +1,14 @@
+[
+  {
+    "targets": ["localhost:3002"],
+    "labels": {
+      "job": "app_copy"
+    }
+  },
+  {
+    "targets": ["localhost:9419"],
+    "labels": {
+      "job": "rabbit"
+    }
+  }
+]

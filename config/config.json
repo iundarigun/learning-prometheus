@@ -1,0 +1,20 @@
+{
+    "rabbit_url": "http://127.0.0.1:15672",
+    "rabbit_user": "admin",
+    "rabbit_pass": "admin",
+    "publish_port": "9419",
+    "exlude_metrics": [],
+    "include_queues": ".*",
+    "skip_queues": "^$",
+    "skip_vhost": "^$",
+    "include_vhost": ".*",
+    "rabbit_capabilities": "no_sort,bert",
+    "enabled_exporters": [
+            "exchange",
+            "node",
+            "overview",
+            "queue"
+    ],
+    "timeout": 30,
+    "max_queues": 0
+}

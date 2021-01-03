@@ -15,3 +15,7 @@ scrape_configs:
   static_configs:
   - targets:
     - localhost:9100    
+- job_name: external
+  file_sd_configs:
+    - files:
+      - targets.json    

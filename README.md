@@ -1,6 +1,8 @@
 # Prometheus
 Prometheus is an open source application used to monitoring applications and collecting metrics. It pull metrics form application endpoint, usally `/metrics`. This is the motive for the good performance. Applications must export in a prometheus format, for prometheus can process. Sometimes, applications can not export in this format, and we can not modify code to export, for example, databases, or operational systems. In these cases, we use an **exporter** who is responsible to collect system or application metrics, and expose prometheus format for it process.
 
+![Prometheus](prometheusArchitecture.png)
+
 These metrics are save in a time series database. It has an API to query metrics, an a simple interface web. We will use grafana to plot data more graceful.
 
 ### Collecting data
@@ -10,6 +12,11 @@ All data is stored as time series. Every time series is identified by the `metri
 ![Prometheus](images/sampledataprometheus.png)
 
 When we are collecting data about some feature of our application, we can have problems with conection between app and prometheus, or with a reset counter of the feature. Prometheus is smart enough to try to extrapole losing data.
+
+We have three kind of collect:
+- An application expose `/metrics` in prometheus format. We need to configure prometheus to scraped these endpoints.
+- An application can not expose this url, because we can not modified it, but exists some exporter (for example, node_exporter) that can collect metrics and expose to prometheus. Again, we need to configure prometheus to scrap it.
+- An application has a execution cycle and is not alive all the time. Prometheus can not scraped it. We need a component `Push Gateway` that received metrics from the application.
 
 ### Concepts
 - Métrics: total requisitions or duration in seconds for requisition
@@ -30,9 +37,9 @@ $ docker run --name local-prometheus -p 9090:9090 -v ~/workspace/learning-promet
 ```
 *note*: If you doen't want worry with IP application, you can use `--network host` instead `-p 9090:9090`.
 
-### Example
+### Adding metrics to prometheus
 
-Imagine that we create a counter for requisitions on application (see `app` folder). We need to add this application to prometeus adding an entry on prometheus.yaml:
+Imagine that we create a counter for requisitions on application (see `app` folder). We need to add this application to prometeus adding an entry on `prometheus.yaml`:
 ```yaml
 global:
   scrape_interval: 30s
@@ -47,6 +54,11 @@ scrape_configs:
   - targets:
     - localhost:3000
 ```
+
+We can see all configured targets on `<prometheus url>/targets`:
+
+![Prometheus](images/prometheusTargets.png)
+
 After this, we can do some thinks. Query prometheus:
 - *aula_request_total* : the name of the metric
 - *increase(aula_request_total[1m])* : The occurrences of metric in a minut. 
@@ -98,6 +110,7 @@ We can use labels to filter results. For example:
 
 We can use regular expressions to filter labels with sintaxe `=~`:
 - `aula_request_total{method=~"GET|POST"}` filtering method *GET* or *POST*
+- `aula_request_total{statusCode!~"2.."}` filtering method with statusCode is diferent than *2xx*
 
 To filter for more than one label, we can concat the filters using `,`:
 - `aula_request_total{method="POST",statusCode="200"}`
@@ -138,12 +151,85 @@ We can use to apply operations for time series of a metric, for example metric `
 
 We can use others like `max`, `min`, `count`, etc. More agregators on prometheus site: https://prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators
 
+### Service Discovery
+Is a mechanism to discover services to monitoring automatically. We add a scrape config for EC2, for example, or Kubernetes too, to use to add services to prometheus.
+
+An other way is adding manually in a config file referenced by `prometheus.yml`. This alows to add more services to monitoring without restart prometheus.
+
+```yaml
+# other configs
+- job_name: external
+  file_sd_configs:
+    - files:
+      - targets.json    
+# other configs
+```
+
+```json
+[
+  {
+    "targets": ["localhost:3002"],
+    "labels": {
+      "job": "app3002"
+    }
+  }
+ // other configs
+]
+```
+### Exporters
+Exporters are use to expose metrics from softwares that are not prepare to expose prometheus metrics. Node Exporter is an example to expose SO metrics. We can, too, expose metrics from others systems. See list here: https://prometheus.io/docs/instrumenting/exporters
+
+#### RabbitMQ
+
+If you are running a RabbitMQ, you can expose metrics using `exporter` form https://github.com/kbudde/rabbitmq_exporter.
+- Download the last binary: https://github.com/kbudde/rabbitmq_exporter/releases
+- Extract in a folder
+- Config a file with Rabbit informations
+```json
+{
+    "rabbit_url": "http://127.0.0.1:15672",
+    "rabbit_user": "admin",
+    "rabbit_pass": "admin",
+    "publish_port": "9419",
+    "exlude_metrics": [],
+    "include_queues": ".*",
+    "skip_queues": "^$",
+    "skip_vhost": "^$",
+    "include_vhost": ".*",
+    "rabbit_capabilities": "no_sort,bert",
+    "enabled_exporters": [
+            "exchange",
+            "node",
+            "overview",
+            "queue"
+    ],
+    "timeout": 30,
+    "max_queues": 0
+}
+```
+- Add target on `targets.json` (example below) or on `prometheus.yaml`:
+```json
+[
+  // other configs here
+  {
+    "targets": ["localhost:9419"],
+    "labels": {
+      "job": "rabbit"
+    }
+  }
+]
+```
+- run `./rabbitmq_exporter -config-file config.json`
+
+### Alerts
+Prometheus has a complex system of alerts called AlertManager. It is quite dificult to configure and set up. I do not explain more because we focous in `grafana's alarms` later.
+
 ### Best practices
 - Use labels for diferencies under the same metric, but do not overdo it
 - Name metrics pattern is *application Domian_metric name_unit*. For example: `gateway_requistion_authentication_duration_second`.
 - Use default units:  https://prometheus.io/docs/practices/naming/#base-units
 
-### Histogram or summary?
+#### Histogram or summary?
 Histogram :
 - Can agregate values from more than one server
 - Is good when we can predict response values. For example: request time 
@@ -232,12 +318,13 @@ grafana: admin/grafana
 - Run docker for Prometheus and grafana:
 ```
 docker run --name local-grafana --network host -d grafana/grafana
-docker run --name local-prometheus --network host -v ~/workspace/learning-prometheus/config/prometheus.yml:/etc/prometheus/prometheus.yml -d prom/prometheus
+docker run --name local-prometheus --network host -v ~/workspace/learning-prometheus/config:/etc/prometheus -d prom/prometheus
 ```
 - Go to `app` folder and run:
 ```
 npm install
 node ./index2.js
+node ./index3.js
 ```
 - Download `node exporter` and run:
 ```
@@ -245,3 +332,4 @@ node ./index2.js
 ```
 - Configure grafana datasource for prometheus
 - Import `config/aulaDashboard.json` as a dashboard
+
