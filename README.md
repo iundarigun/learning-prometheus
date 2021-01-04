@@ -1,7 +1,7 @@
 # Prometheus
 Prometheus is an open source application used to monitoring applications and collecting metrics. It pull metrics form application endpoint, usally `/metrics`. This is the motive for the good performance. Applications must export in a prometheus format, for prometheus can process. Sometimes, applications can not export in this format, and we can not modify code to export, for example, databases, or operational systems. In these cases, we use an **exporter** who is responsible to collect system or application metrics, and expose prometheus format for it process.
 
-![Prometheus](prometheusArchitecture.png)
+![Prometheus Architecture](images/prometheusArchitecture.png)
 
 These metrics are save in a time series database. It has an API to query metrics, an a simple interface web. We will use grafana to plot data more graceful.
 
