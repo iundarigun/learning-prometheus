@@ -1,0 +1,11 @@
+notifiers:
+  - name: Webhook
+    type: webhook
+    uid: 2qIdZnaMk
+    org_id: 1
+    is_default: false
+    send_reminder: false
+    disable_resolve_message: false
+    settings:
+      url: 'http://localhost:1899'
+      httpMethod: 'POST'

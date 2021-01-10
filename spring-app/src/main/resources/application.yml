@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: spring-prometheus-demo
+  rabbitmq:
+    username: admin
+    password: admin
+
+server:
+  port: 1980
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,env
+  metrics:
+    tags:
+      application: ${spring.application.name}
+

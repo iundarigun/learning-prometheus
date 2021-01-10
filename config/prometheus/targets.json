@@ -1,0 +1,21 @@
+[
+  {
+    "targets": ["localhost:3002"],
+    "labels": {
+      "job": "app_copy"
+    }
+  },
+  {
+    "targets": ["localhost:9419"],
+    "labels": {
+      "job": "rabbit"
+    }
+  },
+  {
+    "targets": ["localhost:1980"],
+    "labels": {
+      "__metrics_path__": "/actuator/prometheus",
+      "job": "spring-boot-sample"
+    }
+  }
+]
