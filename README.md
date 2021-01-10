@@ -303,6 +303,18 @@ We can add a row in a dashboard, and all panels in this row can be repeat by var
 - We can duplicate and copy panels, that can be useful in some situations
 - Dashboard that we can import: https://grafana.com/grafana/dashboards?dataSource=prometheus
 
+### Configure Grafana with files
+When we want separe config files from specific instance of grafana, we can use configurations by files. 
+
+All configurations are in `/etc/grafana` folder and subfolders.
+- */etc/grafana/grafana.ini* : Grafana configuration. We can save it on database, and configurations are in this file
+- */etc/grafana/provisioning*: Contains specific configurations:
+  - *datasources*: here can put yaml files configuring datasources. You can see example on [config/grafana/provisioning/datasources/datasource-prometheus.yaml](config/grafana/provisioning/datasources/datasource-prometheus.yaml)
+  - *dashboards*: Here can put yaml files configuring locations for dashboards. You can see example on [config/grafana/provisioning/dashboards/dashboards.yaml](config/grafana/provisioning/dashboards/dashboards.yaml). In this case, we configure `files` folder to contains specific dashboards configuration.
+  - *notifiers*: Here can put yaml files configuring Alert Notifiers. You can see example on [config/grafana/provisioning/notifiers/notifier.yaml](config/grafana/provisioning/notifiers/notifier.yaml).
+
+  You can see more information here: [https://grafana.com/docs/grafana/latest/administration/provisioning/#provisioning-grafana](https://grafana.com/docs/grafana/latest/administration/provisioning/#provisioning-grafana)
+
 # References
 - https://prometheus.io
 - https://github.com/prometheus/prometheus
@@ -311,15 +323,9 @@ We can add a row in a dashboard, and all panels in this row can be repeat by var
 - https://hub.docker.com/r/grafana/grafana/
 - https://www.udemy.com/course/monitorando-aplicacoes-com-prometheus-e-grafana
 
-### helps
-grafana: admin/grafana
+# Help to run
 
-#### How to up test environment
-- Run docker for Prometheus and grafana:
-```
-docker run --name local-grafana --network host -d grafana/grafana
-docker run --name local-prometheus --network host -v ~/workspace/learning-prometheus/config:/etc/prometheus -d prom/prometheus
-```
+### How to up test environment
 - Go to `app` folder and run:
 ```
 npm install
@@ -330,6 +336,31 @@ node ./index3.js
 ```
 ./node_exporter
 ```
-- Configure grafana datasource for prometheus
-- Import `config/aulaDashboard.json` as a dashboard
+- Run Rabbit to get metrics for rabbit:
+```
+docker run -d --name local-rabbit -p 15672:15672 -p 5672:5672 \
+-e RABBITMQ_DEFAULT_USER=admin \
+-e RABBITMQ_DEFAULT_PASS=admin \
+rabbitmq:3-management
+```
+- Download rabbit exporter and run:
+```
+./rabbitmq_exporter -config-file ~/workspace/learning-prometheus/config/config.json 
+```
+- Run Spring project on `spring-app` folder:
+```
+./gradlew clean bootRun
+```
+- Run docker for Prometheus and grafana:
+```
+docker run --name local-prometheus --network host -v ~/workspace/learning-prometheus/config/prometheus:/etc/prometheus -d prom/prometheus
+
+docker run --name local-grafana --network host \
+-v ~/workspace/learning-prometheus/config/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards \
+-v ~/workspace/learning-prometheus/config/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources \
+-v ~/workspace/learning-prometheus/config/grafana/provisioning/notifiers:/etc/grafana/provisioning/notifiers \
+  -d grafana/grafana
+```
+- Import `https://grafana.com/dashboards/4701` to import micrometer dashboard
+- Import `https://grafana.com/grafana/dashboards/5984` to import linux alert sample dashboard.
 
