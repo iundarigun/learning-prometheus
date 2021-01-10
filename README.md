@@ -322,6 +322,9 @@ All configurations are in `/etc/grafana` folder and subfolders.
 - https://grafana.com/grafana/download
 - https://hub.docker.com/r/grafana/grafana/
 - https://www.udemy.com/course/monitorando-aplicacoes-com-prometheus-e-grafana
+- https://www.udemy.com/course/monitoring-and-alerting-with-prometheus/
+
+--- 
 
 # Help to run
 
